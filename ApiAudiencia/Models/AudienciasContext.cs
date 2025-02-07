@@ -16,9 +16,10 @@ public partial class AudienciasContext : DbContext
     }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
-
+    public DbSet<Empleado> Empleados { get; set; }
+    public DbSet<Proveedor> Proveedores { get; set; }
+    public DbSet<Solicitud> Solicitudes { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +40,15 @@ public partial class AudienciasContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
         });
+            modelBuilder.Entity<Solicitud>()
+                .HasOne(s => s.Empleado)
+                .WithMany(e => e.Solicitudes)
+                .HasForeignKey(s => s.Empleado.DNI);
+
+            modelBuilder.Entity<Solicitud>()
+                .HasOne(s => s.Proveedor)
+                .WithMany(p => p.Solicitudes)
+                .HasForeignKey(s => s.Proveedor.DNI);
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -5,10 +5,6 @@ using System.Text;
 using ApiAudiencia.Custom;
 using ApiAudiencia.Models;
 
-
-
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,7 +16,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AudienciasContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AnotherConnection"));
 });
 builder.Services.AddSingleton<Utilidades>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
