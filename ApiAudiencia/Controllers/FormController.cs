@@ -1,4 +1,5 @@
 ﻿using ApiAudiencia.Models;
+using ApiAudiencia.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,14 +19,14 @@ namespace ApiAudiencia.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> CrearAudiencia([FromBody] Audiencia modelo)
+        public async Task<IActionResult> CrearAudiencia([FromBody] AudienciaDTO modelo)
         {
             if (modelo == null || !ModelState.IsValid)
             {
                 return BadRequest("Datos inválidos.");
             }
 
-            // ✅ Verificar si las claves foráneas existen antes de la inserción
+            // Verificar si las claves foráneas existen antes de la inserción
             bool cargoExiste = await _context.Cargos.AnyAsync(c => c.IdCargo == modelo.IdCargo);
             bool clasificacionExiste = await _context.Clasificaciones.AnyAsync(cl => cl.Idclasificacion == modelo.IdClasificacion);
             bool empleadoExiste = await _context.Empleados.AnyAsync(e => e.IdEmpleado == modelo.AtendidoPor);
@@ -40,7 +41,7 @@ namespace ApiAudiencia.Controllers
             if (!estadoExiste)
                 return BadRequest("El Estado especificado no existe.");
 
-            // ✅ Crear la nueva audiencia con los valores correctos
+            //  crea la nueva audiencia 
             var nuevaAudiencia = new Audiencia
             {
                 CorreoElectronico = modelo.CorreoElectronico,
@@ -51,7 +52,7 @@ namespace ApiAudiencia.Controllers
                 IdClasificacion = modelo.IdClasificacion,
                 DerivadoA = modelo.DerivadoA,
                 AtendidoPor = modelo.AtendidoPor,
-                IdEstado = modelo.IdEstado,  // Ahora usamos el ID en vez de un string
+                IdEstado = modelo.IdEstado,  
                 Asunto = modelo.Asunto
             };
 
@@ -59,6 +60,7 @@ namespace ApiAudiencia.Controllers
             {
                 _context.Audiencias.Add(nuevaAudiencia);
                 await _context.SaveChangesAsync();
+                //sirve para devolver un 201
                 return CreatedAtAction(nameof(CrearAudiencia), new { id = nuevaAudiencia.IdAudiencia }, nuevaAudiencia);
             }
             catch (Exception ex)
@@ -66,5 +68,31 @@ namespace ApiAudiencia.Controllers
                 return StatusCode(500, $"Error interno: {ex.Message}");
             }
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> ObtenerAudiencias()
+        {
+            var audiencias = await _context.Audiencias
+                .Select(t => new
+                {
+                    t.IdAudiencia,
+                    t.CorreoElectronico,
+                    t.Fecha,
+                    t.Dni,
+                    t.NombreEmpresa,
+                    t.IdCargo,
+                    t.IdClasificacion,
+                    t.IdEstado,
+                    t.AtendidoPor,
+                    t.DerivadoA,
+                    t.Estado,
+                    t.Asunto
+                }).ToListAsync();
+
+            return Ok(audiencias);
+        }
     }
 }
+
+
