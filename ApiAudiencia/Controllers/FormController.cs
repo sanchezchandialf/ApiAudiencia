@@ -74,24 +74,41 @@ namespace ApiAudiencia.Controllers
         public async Task<IActionResult> ObtenerAudiencias()
         {
             var audiencias = await _context.Audiencias
-                .Select(t => new
-                {
-                    t.IdAudiencia,
-                    t.CorreoElectronico,
-                    t.Fecha,
-                    t.Dni,
-                    t.NombreEmpresa,
-                    t.IdCargo,
-                    t.IdClasificacion,
-                    t.IdEstado,
-                    t.AtendidoPor,
-                    t.DerivadoA,
-                    t.Estado,
-                    t.Asunto
-                }).ToListAsync();
+                .Join(_context.Empleados,
+                      audiencia => audiencia.AtendidoPor,
+                      empleado => empleado.IdEmpleado,
+                      (audiencia, empleado) => new { audiencia, empleado })
+                .Join(_context.Estados,
+                      temp => temp.audiencia.IdEstado,
+                      estado => estado.Idestado,
+                      (temp, estado) => new { temp.audiencia, temp.empleado, estado })
+                .Join(_context.Cargos,
+                      temp => temp.audiencia.IdCargo,
+                      cargo => cargo.IdCargo,
+                      (temp, cargo) => new { temp.audiencia, temp.empleado, temp.estado, cargo })
+                .Join(_context.Clasificaciones,
+                      temp => temp.audiencia.IdClasificacion,
+                      clasificacion => clasificacion.Idclasificacion,
+                      (temp, clasificacion) => new
+                      {
+                          temp.audiencia.IdAudiencia,
+                          temp.audiencia.CorreoElectronico,
+                          temp.audiencia.Fecha,
+                          temp.audiencia.Dni,
+                          temp.audiencia.NombreEmpresa,
+                          Cargo = temp.cargo.NombreCargo,  // Nombre del Cargo
+                          Clasificacion = clasificacion.Clasificacion, // Nombre de Clasificación
+                          Estado = temp.estado.Nombre, // Nombre del Estado
+                          AtendidoPor = temp.empleado.Nombre + " " + temp.empleado.Apellido, // Nombre del Atendente
+                          temp.audiencia.DerivadoA,
+                          temp.audiencia.Asunto
+                      })
+                .ToListAsync();
 
             return Ok(audiencias);
         }
+
+
     }
 }
 
