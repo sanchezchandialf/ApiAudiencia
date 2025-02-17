@@ -108,7 +108,6 @@ namespace ApiAudiencia.Controllers
             return Ok(audiencias);
         }
 
-
     }
 }
 
