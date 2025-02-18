@@ -7,10 +7,10 @@ using ApiAudiencia.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración explícita (recomendado)
+// Configuraciï¿½n explï¿½cita (recomendado)
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-// Configuración CORS
+// Configuraciï¿½n CORS
 var CorsPolicy = "allDomains";
 builder.Services.AddCors(options => {
     options.AddPolicy(name: CorsPolicy,
@@ -21,7 +21,7 @@ builder.Services.AddCors(options => {
         });
 });
 
-// Configuración de autenticación mejorada
+// Configuraciï¿½n de autenticaciï¿½n mejorada
 builder.Services.AddAuthentication(config =>
 {
     config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -43,7 +43,7 @@ builder.Services.AddAuthentication(config =>
     };
 });
 
-// Resto de la configuración...
+// Resto de la configuraciï¿½n...
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -62,7 +62,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(CorsPolicy); // Añadir esto
+app.UseCors(CorsPolicy); // Aï¿½adir esto
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
