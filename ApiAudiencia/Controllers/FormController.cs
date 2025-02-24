@@ -93,7 +93,7 @@ namespace ApiAudiencia.Controllers
                       {
                           temp.audiencia.IdAudiencia,
                           temp.audiencia.CorreoElectronico,
-                          temp.audiencia.Fecha,
+                          Fecha=temp.audiencia.Fecha.ToString("dd/MM/yyyy"),
                           temp.audiencia.Dni,
                           temp.audiencia.NombreEmpresa,
                           Cargo = temp.cargo.NombreCargo,  // Nombre del Cargo
@@ -107,6 +107,60 @@ namespace ApiAudiencia.Controllers
 
             return Ok(audiencias);
         }
+
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> ActualizarAudiencia(int id, [FromBody] AudienciaDTO modelo)
+        {
+            if (modelo == null || !ModelState.IsValid)
+            {
+                return BadRequest("Datos inválidos.");
+            }
+
+            var audienciaExistente = await _context.Audiencias.FindAsync(id);
+            if (audienciaExistente == null)
+            {
+                return NotFound("Audiencia no encontrada.");
+            }
+
+            bool cargoExiste = await _context.Cargos.AnyAsync(c => c.IdCargo == modelo.IdCargo);
+            bool clasificacionExiste = await _context.Clasificaciones.AnyAsync(cl => cl.Idclasificacion == modelo.IdClasificacion);
+            bool empleadoExiste = await _context.Empleados.AnyAsync(e => e.IdEmpleado == modelo.AtendidoPor);
+            bool estadoExiste = await _context.Estados.AnyAsync(est => est.Idestado == modelo.IdEstado);
+
+            if (!cargoExiste)
+                return BadRequest("El Cargo especificado no existe.");
+            if (!clasificacionExiste)
+                return BadRequest("La Clasificación especificada no existe.");
+            if (!empleadoExiste)
+                return BadRequest("El Empleado especificado no existe.");
+            if (!estadoExiste)
+                return BadRequest("El Estado especificado no existe.");
+
+            audienciaExistente.CorreoElectronico = modelo.CorreoElectronico;
+            audienciaExistente.Fecha = modelo.Fecha;
+            audienciaExistente.Dni = modelo.Dni;
+            audienciaExistente.IdCargo = modelo.IdCargo;
+            audienciaExistente.NombreEmpresa = modelo.NombreEmpresa;
+            audienciaExistente.IdClasificacion = modelo.IdClasificacion;
+            audienciaExistente.DerivadoA = modelo.DerivadoA;
+            audienciaExistente.AtendidoPor = modelo.AtendidoPor;
+            audienciaExistente.IdEstado = modelo.IdEstado;
+            audienciaExistente.Asunto = modelo.Asunto;
+
+            try
+            {
+                _context.Audiencias.Update(audienciaExistente);
+                await _context.SaveChangesAsync();
+                return Ok(audienciaExistente);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
 
     }
 }
