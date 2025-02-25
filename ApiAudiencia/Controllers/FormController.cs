@@ -109,6 +109,55 @@ namespace ApiAudiencia.Controllers
         }
 
 
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> ObtenerAudienciaPorId(int id)
+        {
+            var audiencia = await _context.Audiencias
+                .Where(a => a.IdAudiencia == id)
+                .Join(_context.Empleados,
+                      audiencia => audiencia.AtendidoPor,
+                      empleado => empleado.IdEmpleado,
+                      (audiencia, empleado) => new { audiencia, empleado })
+                .Join(_context.Estados,
+                      temp => temp.audiencia.IdEstado,
+                      estado => estado.Idestado,
+                      (temp, estado) => new { temp.audiencia, temp.empleado, estado })
+                .Join(_context.Cargos,
+                      temp => temp.audiencia.IdCargo,
+                      cargo => cargo.IdCargo,
+                      (temp, cargo) => new { temp.audiencia, temp.empleado, temp.estado, cargo })
+                .Join(_context.Clasificaciones,
+                      temp => temp.audiencia.IdClasificacion,
+                      clasificacion => clasificacion.Idclasificacion,
+                      (temp, clasificacion) => new
+                      {
+                          temp.audiencia.IdAudiencia,
+                          temp.audiencia.CorreoElectronico,
+                          Fecha = temp.audiencia.Fecha.ToString("dd/MM/yyyy"),
+                          temp.audiencia.Dni,
+                          temp.audiencia.NombreEmpresa,
+                          Cargo = temp.cargo.NombreCargo,  // Nombre del Cargo
+                          Clasificacion = clasificacion.Clasificacion, // Nombre de Clasificación
+                          Estado = temp.estado.Nombre, // Nombre del Estado
+                          AtendidoPor = temp.empleado.Nombre + " " + temp.empleado.Apellido, // Nombre del Atendente
+                          temp.audiencia.DerivadoA,
+                          temp.audiencia.Asunto
+                      })
+                .FirstOrDefaultAsync();
+
+            if (audiencia == null)
+            {
+                return NotFound("Audiencia no encontrada.");
+            }
+
+            return Ok(audiencia);
+        }
+
+
+
+
+
         [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> ActualizarAudiencia(int id, [FromBody] AudienciaDTO modelo)
