@@ -18,7 +18,7 @@ namespace ApiAudiencia.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> CrearAudiencia([FromBody] AudienciaDTO modelo)
         {
             if (modelo == null || !ModelState.IsValid)
@@ -156,6 +156,14 @@ namespace ApiAudiencia.Controllers
 
 
 
+        [HttpGet("{fecha}")]
+        [Authorize]
+
+
+
+
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
         [HttpPut("{id}")]
