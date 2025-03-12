@@ -52,13 +52,15 @@ builder.Services.AddDbContext<AudienciasContext>(options =>
 builder.Services.AddSingleton<Utilidades>();
 
 var app = builder.Build();
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://*:{port}");
 
 // Pipeline middleware
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 app.UseCors(CorsPolicy); // A�adir esto
 app.UseHttpsRedirection();
@@ -66,5 +68,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.Run();
+app.MapGet("/", () => "API FUNCIONANDO...");
+app.Run(); // Escucha en el puerto 80 dentro del contenedor
