@@ -3,6 +3,7 @@ using ApiAudiencia.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Abstractions;
 
 namespace ApiAudiencia.Controllers
 {
@@ -257,9 +258,32 @@ namespace ApiAudiencia.Controllers
                 return StatusCode(500, $"Error interno: {ex.Message}");
             }
         }
+    
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> borrarForm(int id)
+        {
+            var audienciaExistente = await _context.Audiencias.FindAsync(id);
+            if (audienciaExistente == null)
+            {
+                return NotFound();
+            }
 
-
+            try
+            {
+                _context.Audiencias.Remove(audienciaExistente);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception)
+            {
+                // Log the exception (ex) here
+                return Problem("Ocurrió un error al procesar la solicitud.");
+            }
+        } 
+    
     }
+    
 }
 
 
