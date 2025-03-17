@@ -10,14 +10,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 builder.Configuration.AddJsonFile("appsettings.secret.json", optional: false, reloadOnChange: true);
 
-var CorsPolicy = "allDomains";
-builder.Services.AddCors(options => {
-    options.AddPolicy(name: CorsPolicy,
-        policy => {
-            policy.WithOrigins("*")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+var CorsPolicy = "AllowFrontend";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: CorsPolicy, policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:5173", // Para desarrollo local
+            "https://audiencia-l864aoahc-lautarosanche-gmailcoms-projects.vercel.app" // Frontend en Vercel
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+
+    // Solo en desarrollo, permitir cualquier origen temporalmente
+    if (builder.Environment.IsDevelopment())
+    {
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
         });
+    }
 });
 
 builder.Services.AddAuthentication(config =>
@@ -41,7 +56,6 @@ builder.Services.AddAuthentication(config =>
     };
 });
 
-// Resto de la configuraci�n...
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -60,8 +74,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(CorsPolicy); // A�adir esto
 app.UseHttpsRedirection();
+
+app.UseRouting();
+
+// Aplicar CORS
+app.UseCors(builder.Environment.IsDevelopment() ? "AllowAll" : CorsPolicy);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
