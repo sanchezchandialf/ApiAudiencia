@@ -23,11 +23,15 @@ public class UsuarioController : ControllerBase
         _context = context;
         _utilidades = utilidades;
     }
+    
     [HttpPut]
+    [Route("/[controller]/editpass")]
     [Authorize]
     public async Task<IActionResult> ActualizarContraseña([FromBody] PassDTO modelo)
     {
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
+        var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
+
         if (usuario == null)
         {
             return Unauthorized("Usuario no encontrado");
@@ -40,11 +44,52 @@ public class UsuarioController : ControllerBase
                 usuario.Clave=modelo.ClaveNueva;
                 _context.Usuarios.Update(usuario);
             }
-            return Ok(usuario);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Contraseña actualizada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error al actualizar la contraseña");
+            }
         }
         else
         {
             return Unauthorized("Usuario no encontrado");
         }
     }
+
+    [HttpPut]
+    [Route("/[controller]/edituser")]
+    [Authorize]
+    public async Task<IActionResult> ActualizarContraseña([FromBody] UsuarioUpdateDTO modelo)
+    {
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
+        var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
+
+        if (usuario == null)
+        {
+            return Unauthorized("Usuario no encontrado");
+        }
+        if (esPropioUsuario)
+        {
+            usuario.Nombre = modelo.Nombre ?? usuario.Nombre;
+            usuario.Correo = modelo.Correo ?? usuario.Correo;
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Usuario actualizado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error al actualizar la contraseña");
+            }
+        }
+        else
+        {
+            return Unauthorized("Usuario no encontrado");
+        }
+    }
+    
 }
