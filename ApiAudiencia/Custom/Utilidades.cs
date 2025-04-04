@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Security.Cryptography;
@@ -35,11 +34,8 @@ namespace ApiAudiencia.Custom
             var claims = new[]
             {
                new Claim(ClaimTypes.NameIdentifier, modelo.IdUsuario.ToString()),
-                new Claim(ClaimTypes.Email, modelo.Correo!),
-              
-
-
-           };
+               new Claim(ClaimTypes.Email, modelo.Correo!),
+            };
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
