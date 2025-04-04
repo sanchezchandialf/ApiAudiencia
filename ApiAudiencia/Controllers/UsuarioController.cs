@@ -25,7 +25,7 @@ public class UsuarioController : ControllerBase
     }
     
     [HttpPut]
-    [Route("/[controller]/editpass")]
+    [Route("/api/Usuario/editpass")]
     [Authorize]
     public async Task<IActionResult> ActualizarContraseña([FromBody] PassDTO modelo)
     {
@@ -61,9 +61,9 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpPut]
-    [Route("/[controller]/edituser")]
+    [Route("/api/Usuario/editusr")]
     [Authorize]
-    public async Task<IActionResult> ActualizarContraseña([FromBody] UsuarioUpdateDTO modelo)
+    public async Task<IActionResult> ActualizarUsuario([FromBody] UsuarioUpdateDTO modelo)
     {
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
         var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
