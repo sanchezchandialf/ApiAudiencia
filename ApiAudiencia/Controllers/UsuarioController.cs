@@ -73,7 +73,7 @@ public class UsuarioController : ControllerBase
     [HttpPut]
     [Route("/api/Usuario/edituser")]
     [Authorize]
-    public async Task<IActionResult> ActualizarContraseña([FromBody] UsuarioUpdateDTO modelo)
+    public async Task<IActionResult> ActualizarUsuario([FromBody] UsuarioUpdateDTO modelo)
     {
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
         var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
