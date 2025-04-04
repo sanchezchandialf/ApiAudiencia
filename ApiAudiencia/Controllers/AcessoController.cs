@@ -1,14 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ApiAudiencia.Models;
 using ApiAudiencia.Custom;
 using ApiAudiencia.Models.DTOs;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
 namespace ApiAudiencia.Controllers
 {
     [Route("api/[controller]")]
@@ -22,42 +17,59 @@ namespace ApiAudiencia.Controllers
         {
             _context = context;
             _utilidades = utilidades;
-
         }
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTOs login)
         {
-            if (login == null)
+            if (string.IsNullOrEmpty(login.Correo) || string.IsNullOrEmpty(login.Clave))
             {
-                return BadRequest("Datos incorrectos");
-            }
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == login.Correo);
+                return BadRequest("Correo y contraseña son requeridos");
+            } 
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(x => x.Correo == login.Correo);
+    
             if (usuario == null)
             {
-                return Unauthorized("Usuario no encontrado");
+                return Unauthorized("Credenciales inválidas");
             }
-            if (User != null)
+
+            bool credencialesValidas = false;
+    
+            if (usuario.Clave.StartsWith("$2a$") || usuario.Clave.StartsWith("$2b$")) 
             {
-                var token = _utilidades.generarToken(usuario);
-                return Ok(new
-
-                { token = token,
-                    FechaExpiracion = DateTime.UtcNow.AddMinutes(60),
-                    usuario = new
-                    {
-                        usuario.IdUsuario,
-                        usuario.Nombre,
-                        usuario.Correo,
-                        usuario.EsAdmin
-                    }
-
-                });
+                credencialesValidas = BCrypt.Net.BCrypt.Verify(login.Clave, usuario.Clave);
             }
             else
             {
-                return Unauthorized("Usuario no encontrado");
+                credencialesValidas = (usuario.Clave == login.Clave);
+        
+                if (credencialesValidas)
+                {
+                    usuario.Clave = BCrypt.Net.BCrypt.HashPassword(login.Clave);
+                    await _context.SaveChangesAsync();
+                }
             }
+
+            if (!credencialesValidas)
+            {
+                return Unauthorized("Credenciales inválidas");
+            }
+
+            var token = _utilidades.generarToken(usuario);
+    
+            return Ok(new
+            {
+                token = token,
+                FechaExpiracion = DateTime.UtcNow.AddMinutes(60),
+                usuario = new
+                {
+                    usuario.IdUsuario,
+                    usuario.Nombre,
+                    usuario.Correo,
+                    usuario.EsAdmin
+                }
+            });
         }
     }
 }

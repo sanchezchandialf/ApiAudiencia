@@ -1,14 +1,10 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ApiAudiencia.Models;
 using ApiAudiencia.Custom;
 using ApiAudiencia.Models.DTOs;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
+using System.Security.Claims;
 
 namespace ApiAudiencia.Controllers;
 [Route("api/[controller]")]
@@ -29,49 +25,59 @@ public class UsuarioController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ActualizarContraseña([FromBody] PassDTO modelo)
     {
-        var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
-        var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
-
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+    
+        if (string.IsNullOrEmpty(userEmail))
+            return Unauthorized("Usuario no autenticado");
+        
+        var usuario = await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.Correo == userEmail);
+    
         if (usuario == null)
+            return NotFound("Usuario no encontrado");
+        bool passwordValid;
+        if (usuario.Clave.StartsWith("$2a$") || usuario.Clave.StartsWith("$2b$"))
         {
-            return Unauthorized("Usuario no encontrado");
-        }
-        if (User != null)
-        {
-            var pass = modelo.ClaveActual;
-            if (usuario.Clave == pass)
-            {
-                usuario.Clave=modelo.ClaveNueva;
-                _context.Usuarios.Update(usuario);
-            }
-            try
-            {
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Contraseña actualizada correctamente" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Error al actualizar la contraseña");
-            }
+            // Verificación con BCrypt
+            passwordValid = BCrypt.Net.BCrypt.Verify(modelo.ClaveActual, usuario.Clave);
         }
         else
         {
-            return Unauthorized("Usuario no encontrado");
+            // Migración: comparación en texto plano (solo durante transición)
+            passwordValid = (usuario.Clave == modelo.ClaveActual);
+        
+            // Auto-migrar a BCrypt si la contraseña es correcta
+            if (passwordValid)
+            {
+                usuario.Clave = BCrypt.Net.BCrypt.HashPassword(modelo.ClaveActual);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        if (!passwordValid)
+            return BadRequest("Contraseña actual incorrecta");
+        // 4. Hashear y guardar la nueva contraseña
+        usuario.Clave = BCrypt.Net.BCrypt.HashPassword(modelo.ClaveNueva);
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Contraseña actualizada correctamente" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "Error al actualizar la contraseña");
         }
     }
 
     [HttpPut]
-    [Route("/api/Usuario/editusr")]
+    [Route("/api/Usuario/edituser")]
     [Authorize]
     public async Task<IActionResult> ActualizarUsuario([FromBody] UsuarioUpdateDTO modelo)
     {
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
         var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
 
-        if (usuario == null)
-        {
-            return Unauthorized("Usuario no encontrado");
-        }
         if (esPropioUsuario)
         {
             usuario.Nombre = modelo.Nombre ?? usuario.Nombre;
@@ -91,5 +97,4 @@ public class UsuarioController : ControllerBase
             return Unauthorized("Usuario no encontrado");
         }
     }
-    
 }
