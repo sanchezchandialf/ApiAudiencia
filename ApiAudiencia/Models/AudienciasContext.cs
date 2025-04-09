@@ -26,7 +26,7 @@ public partial class AudienciasContext : DbContext
     public virtual DbSet<Estado> Estados { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
-
+    public virtual DbSet<EmailRequest> EmailRequests { get; set; }
    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -120,6 +120,22 @@ public partial class AudienciasContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
         });
+
+        modelBuilder.Entity<EmailRequest>(entity =>
+            {
+                entity.HasKey(er => er.IdEmail);
+                entity.ToTable("EmailRequest");
+                entity.Property(er => er.Destinatario)
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
+                entity.Property(er => er.CodigoRecuperacion)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+                entity.Property(er => er.CodigoRecuperacionExpira)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnType("datetime");
+            }
+        );
 
         OnModelCreatingPartial(modelBuilder);
     }

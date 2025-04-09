@@ -64,6 +64,9 @@ builder.Services.AddDbContext<AudienciasContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AzureConnection")));
 
 builder.Services.AddSingleton<Utilidades>();
+// Configuración SMTP
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
