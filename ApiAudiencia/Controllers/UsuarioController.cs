@@ -71,20 +71,29 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpPut]
-    [Route("/api/Usuario/edituser")]
-    [Authorize]
-    public async Task<IActionResult> ActualizarUsuario([FromBody] UsuarioUpdateDTO modelo)
+    [Route("/api/Usuario/newpass")]
+    public async Task<IActionResult> NuevaContraseña ([FromBody] RecoveryDTO modelo)
     {
-        var usuario = await _context.Usuarios.FirstOrDefaultAsync(x => x.Correo == modelo.Correo);
-        var esPropioUsuario = usuario.Correo.Equals(modelo.Correo, StringComparison.OrdinalIgnoreCase);
-
-        if (esPropioUsuario)
+        var usuario = await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.Correo == modelo.Destinatario);
+        var emailrequest = await _context.EmailRequests.FirstOrDefaultAsync(er => er.Destinatario == modelo.Destinatario);
+        if (usuario == null)
+            return NotFound("Usuario no encontrado");
+        if (emailrequest == null)
+            return NotFound("No se encontro ninguna solicitud de recuperacion");
+        if ((emailrequest.CodigoRecuperacionExpira - DateTime.Now).Minutes > 15) //Si ya paso los 15 min.
         {
-            usuario.Nombre = modelo.Nombre ?? usuario.Nombre;
-            usuario.Correo = modelo.Correo ?? usuario.Correo;
+            _context.EmailRequests.Remove(emailrequest); //Borro la solicitud de recuperacion de la BD si expiro.
+            await _context.SaveChangesAsync(); //Guardo cambios
+            return StatusCode(500,"El tiempo de la solicitud ha expirado");
+        }
+        if (modelo.Codigo.Equals(emailrequest.CodigoRecuperacion))
+        {
+            usuario.Clave = BCrypt.Net.BCrypt.HashPassword(modelo.ClaveNueva); //Cambio la contraseña
+            _context.EmailRequests.Remove(emailrequest); //Borro la solicitud de recuperacion de la BD.
             try
             {
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); //Guardo cambios
                 return Ok(new { message = "Usuario actualizado correctamente" });
             }
             catch (Exception ex)
@@ -94,7 +103,7 @@ public class UsuarioController : ControllerBase
         }
         else
         {
-            return Unauthorized("Usuario no encontrado");
+            return StatusCode(500, "Error al introducir el codigo de autenticacion");
         }
     }
 }
