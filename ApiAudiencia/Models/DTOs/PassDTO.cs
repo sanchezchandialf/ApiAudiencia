@@ -11,6 +11,4 @@ namespace ApiAudiencia.Models.DTOs
         public string ClaveNueva { get; set; }
         public string Codigo { get; set; }
     }
-    
-    
 }
