@@ -19,21 +19,6 @@ public class EmailController : ControllerBase
         _context = context;
     }
 
-    [HttpPost("send")]
-    public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
-    {
-        try
-        {
-            await _emailService.SendEmailAsync(request.Destinatario, "Asunto", "Prueba");
-            return Ok(new { Success = true, Message = "Correo enviado exitosamente" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al enviar correo");
-            return StatusCode(500, new { Success = false, Message = "Error al enviar el correo", Error = ex.Message });
-        }
-    }
-
     [HttpPost("auth")]
     public async Task<IActionResult> Auth([FromBody] EmailRequestDTO request)
     {
