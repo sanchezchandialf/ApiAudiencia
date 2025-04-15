@@ -38,13 +38,14 @@ public class EmailController : ControllerBase
     {
         // Generar código de 6 dígitos
         var random = new Random();
-        var codigo = random.Next(100000, 999999).ToString();
-        var emailrequest = new EmailRequest();
+        var emailrequest = new EmailRequest
+        {
+            // Guardar el código en la base de datos (con fecha de expiración)
+            CodigoRecuperacion = random.Next(100000, 999999).ToString(),
+            CodigoRecuperacionExpira = DateTime.UtcNow.AddMinutes(15), // Expira en 15 minutos
+            Destinatario = request.Destinatario
+        };
         
-        // Guardar el código en la base de datos (con fecha de expiración)
-        emailrequest.CodigoRecuperacion = codigo;
-        emailrequest.CodigoRecuperacionExpira = DateTime.UtcNow.AddMinutes(15); // Expira en 15 minutos
-        emailrequest.Destinatario = request.Destinatario;
         _context.EmailRequests.Add(emailrequest);
         await _context.SaveChangesAsync();
 
@@ -64,7 +65,7 @@ public class EmailController : ControllerBase
                         <p>Hola,</p>
                         <p>Recibimos una solicitud para restablecer tu contraseña en la aplicación de gestión de audiencia.</p>
                         <p>Usá el siguiente código para completar el proceso:</p>
-                        <p style=""font-size: 24px; font-weight: bold; color: #d02d69;"">{codigo}</p>
+                        <p style=""font-size: 24px; font-weight: bold; color: #d02d69;"">{emailrequest.CodigoRecuperacion}</p>
                         <p>Ingresá este código en el formulario de recuperación para continuar.</p>
                         <p>Este código expirará en 15 minutos.</p>
                         <p>Si no solicitaste esto, podés ignorar este mensaje.</p>

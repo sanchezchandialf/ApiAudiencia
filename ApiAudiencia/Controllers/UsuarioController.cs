@@ -46,6 +46,11 @@ public class UsuarioController : ControllerBase
     public async Task<IActionResult> EliminarUsuario(int id)
     {
         var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+        {
+            return StatusCode(500, "No se encontro el usuario");
+        }
+        
         try
         {
             _context.Usuarios.Remove(usuario);
@@ -54,7 +59,7 @@ public class UsuarioController : ControllerBase
         }
         catch
         {
-            return StatusCode(500, "Error, el usuario no existe");
+            return StatusCode(500, "Error, no se pudo eliminar el usuario");
         }
     }
 
@@ -112,7 +117,7 @@ public class UsuarioController : ControllerBase
             await _context.SaveChangesAsync();
             return Ok(new { message = "Contraseña actualizada correctamente" });
         }
-        catch (Exception ex)
+        catch
         {
             return StatusCode(500, "Error al actualizar la contraseña");
         }
@@ -144,7 +149,7 @@ public class UsuarioController : ControllerBase
                 await _context.SaveChangesAsync(); //Guardo cambios
                 return Ok(new { message = "Usuario actualizado correctamente" });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, "Error al actualizar la contraseña");
             }

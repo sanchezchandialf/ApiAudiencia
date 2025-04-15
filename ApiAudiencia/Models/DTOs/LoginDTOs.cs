@@ -3,10 +3,8 @@ namespace ApiAudiencia.Models.DTOs
 {
     public class LoginDTOs
     {
-        [Required]
         [EmailAddress]
-        public string Correo { get; set; }
-        [Required]
-        public string Clave { get; set; }
+        public required string Correo { get; set; }
+        public required string Clave { get; set; }
     }
 }
