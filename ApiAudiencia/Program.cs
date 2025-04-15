@@ -17,8 +17,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: CorsPolicy, policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173", // Para desarrollo local
-            "https://audiencia-l864aoahc-lautarosanche-gmailcoms-projects.vercel.app" // Frontend en Vercel
+            "https://audiencia-s.vercel.app/",
+            "https://audiencia-l864aoahc-lautarosanche-gmailcoms-projects.vercel.app"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -34,13 +34,6 @@ builder.Services.AddCors(options =>
         });
     }
 });
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => 
-        policy.RequireClaim("EsAdmin", "true"));
-});
-
 
 builder.Services.AddAuthentication(config =>
 {

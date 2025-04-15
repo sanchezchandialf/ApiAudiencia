@@ -5,7 +5,6 @@ using ApiAudiencia.Custom;
 using ApiAudiencia.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Microsoft.Identity.Client;
 
 namespace ApiAudiencia.Controllers;
 [Route("api/[controller]")]
@@ -23,9 +22,19 @@ public class UsuarioController : ControllerBase
 
     [HttpPost]
     [Route("/api/[controller]/createuser")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize] //Solamente el admin
     public async Task<IActionResult> CrearUsuario([FromBody] UsuarioCreateDTO usr)
     {
+        // Obtener el usuario actual desde los claims
+        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        var currentUser = await _context.Usuarios.FindAsync(currentUserId);
+        
+        // Verificar si es admin
+        if (currentUser == null || !currentUser.EsAdmin)
+        {
+            return Unauthorized("El usuario no es administrador");
+        }
+
         if (await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == usr.Correo) == null)
         {
             var usuario = new Usuario();
@@ -37,18 +46,28 @@ public class UsuarioController : ControllerBase
             await _context.SaveChangesAsync();
             return Ok(new { message = "Usuario creado correctamente" });    
         }
-        return StatusCode(500, "Error, existe un usuario con ese correo");
+        return NotFound("Error, existe un usuario con ese correo");
     }
 
     [HttpDelete]
     [Route("/api/[controller]/deleteuser/{id}")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize] //Solamente el admin
     public async Task<IActionResult> EliminarUsuario(int id)
     {
+        // Obtener el usuario actual desde los claims
+        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        var currentUser = await _context.Usuarios.FindAsync(currentUserId);
+        
+        // Verificar si es admin
+        if (currentUser == null || !currentUser.EsAdmin)
+        {
+            return Unauthorized("El usuario no es administrador");
+        }
+        
         var usuario = await _context.Usuarios.FindAsync(id);
         if (usuario == null)
         {
-            return StatusCode(500, "No se encontro el usuario");
+            return NotFound("No se encontro el usuario");
         }
         
         try
@@ -65,11 +84,21 @@ public class UsuarioController : ControllerBase
 
     [HttpGet]
     [Route("/api/[controller]")]
-    [Authorize(Policy = "AdminOnly")]
-    public async Task<Usuario[]> GetAllUsuarios()
+    [Authorize] //Solamente el admin
+    public async Task<IActionResult> GetAllUsuarios()
     {
+        // Obtener el usuario actual desde los claims
+        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        var currentUser = await _context.Usuarios.FindAsync(currentUserId);
+        
+        // Verificar si es admin
+        if (currentUser == null || !currentUser.EsAdmin)
+        {
+            return Unauthorized("El usuario no es administrador"); // O Unauthorized() dependiendo de tu preferencia
+        }
+        
         var usuarios = await _context.Usuarios.ToArrayAsync();
-        return usuarios;
+        return Ok(usuarios);
     }
     
     
