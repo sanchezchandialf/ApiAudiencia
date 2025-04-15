@@ -5,6 +5,7 @@ using ApiAudiencia.Custom;
 using ApiAudiencia.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.Identity.Client;
 
 namespace ApiAudiencia.Controllers;
 [Route("api/[controller]")]
@@ -19,6 +20,58 @@ public class UsuarioController : ControllerBase
         _context = context;
         _utilidades = utilidades;
     }
+
+    [HttpPost]
+    [Route("/api/[controller]/createuser")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> CrearUsuario([FromBody] UsuarioCreateDTO usr)
+    {
+        if (await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == usr.Correo) == null)
+        {
+            var usuario = new Usuario();
+            usuario.Correo = usr.Correo;
+            usuario.Nombre=usr.Nombre;
+            usuario.Clave = BCrypt.Net.BCrypt.HashPassword(usr.Clave);
+            usuario.EsAdmin = false;
+            _context.Usuarios.Add(usuario);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Usuario creado correctamente" });    
+        }
+        return StatusCode(500, "Error, existe un usuario con ese correo");
+    }
+
+    [HttpDelete]
+    [Route("/api/[controller]/deleteuser/{id}")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> EliminarUsuario(int id)
+    {
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+        {
+            return StatusCode(500, "No se encontro el usuario");
+        }
+        
+        try
+        {
+            _context.Usuarios.Remove(usuario);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Usuario eliminado correctamente" });    
+        }
+        catch
+        {
+            return StatusCode(500, "Error, no se pudo eliminar el usuario");
+        }
+    }
+
+    [HttpGet]
+    [Route("/api/[controller]")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<Usuario[]> GetAllUsuarios()
+    {
+        var usuarios = await _context.Usuarios.ToArrayAsync();
+        return usuarios;
+    }
+    
     
     [HttpPut]
     [Route("/api/Usuario/editpass")]
@@ -64,7 +117,7 @@ public class UsuarioController : ControllerBase
             await _context.SaveChangesAsync();
             return Ok(new { message = "Contraseña actualizada correctamente" });
         }
-        catch (Exception ex)
+        catch
         {
             return StatusCode(500, "Error al actualizar la contraseña");
         }
@@ -96,7 +149,7 @@ public class UsuarioController : ControllerBase
                 await _context.SaveChangesAsync(); //Guardo cambios
                 return Ok(new { message = "Usuario actualizado correctamente" });
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(500, "Error al actualizar la contraseña");
             }

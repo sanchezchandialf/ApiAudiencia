@@ -33,7 +33,7 @@ namespace ApiAudiencia.Controllers
             {
                 return Unauthorized("Credenciales inválidas");
             }
-
+            
             bool credencialesValidas = false;
     
             if (usuario.Clave.StartsWith("$2a$") || usuario.Clave.StartsWith("$2b$")) 
