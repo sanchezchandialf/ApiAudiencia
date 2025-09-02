@@ -22,12 +22,12 @@ namespace ApiAudiencia.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTOs login)
         {
-            if (string.IsNullOrEmpty(login.Correo) || string.IsNullOrEmpty(login.Clave))
+            if (string.IsNullOrEmpty(login.correo) || string.IsNullOrEmpty(login.clave))
             {
                 return BadRequest("Correo y contraseña son requeridos");
             } 
             var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(x => x.Correo == login.Correo);
+                .FirstOrDefaultAsync(x => x.Correo == login.correo);
     
             if (usuario == null)
             {
@@ -38,15 +38,15 @@ namespace ApiAudiencia.Controllers
     
             if (usuario.Clave.StartsWith("$2a$") || usuario.Clave.StartsWith("$2b$")) 
             {
-                credencialesValidas = BCrypt.Net.BCrypt.Verify(login.Clave, usuario.Clave);
+                credencialesValidas = BCrypt.Net.BCrypt.Verify(login.clave, usuario.Clave);
             }
             else
             {
-                credencialesValidas = (usuario.Clave == login.Clave);
+                credencialesValidas = (usuario.Clave == login.clave);
         
                 if (credencialesValidas)
                 {
-                    usuario.Clave = BCrypt.Net.BCrypt.HashPassword(login.Clave);
+                    usuario.Clave = BCrypt.Net.BCrypt.HashPassword(login.clave);
                     await _context.SaveChangesAsync();
                 }
             }

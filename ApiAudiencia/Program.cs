@@ -8,7 +8,7 @@ using ApiAudiencia.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-builder.Configuration.AddJsonFile("appsettings.secret.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.secret.json", optional: true, reloadOnChange: true);
 
 var CorsPolicy = "AllowFrontend";
 
@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: CorsPolicy, policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173", // Para desarrollo local
+            "http://localhost:8080", // Para desarrollo local
             "https://audiencia-l864aoahc-lautarosanche-gmailcoms-projects.vercel.app" // Frontend en Vercel
         )
         .AllowAnyHeader()
@@ -68,7 +68,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AudienciasContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddSingleton<Utilidades>();
 // Configuración SMTP
@@ -79,12 +79,9 @@ var app = builder.Build();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://*:{port}");
 
-// Pipeline middleware
-//if (app.Environment.IsDevelopment())
-//{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-//}
+ app.UseSwagger();
+  app.UseSwaggerUI();
+
 
 app.UseHttpsRedirection();
 
